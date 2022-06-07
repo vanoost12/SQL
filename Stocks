@@ -1,0 +1,115 @@
+create view numInCountry
+as
+select location,count (*) as num
+from company
+where founded < 1990
+group by location;
+
+create view pc
+as
+select location
+from numInCountry
+where num > 5;
+
+create view peakstockprice
+as
+select price,s.symbol
+from stock s, company c
+except
+(
+    select s1.price, s1.symbol
+    from stock s1,
+         stock s2
+    where s1.price < s2.price
+      and s1.symbol = s2.symbol
+);
+
+create view peakbycountry
+as
+select location,price,s.symbol
+from company,peakstockprice s
+where company.Symbol = s.symbol;
+
+create view leadingcomp
+AS
+select symbol
+from peakbycountry
+except
+(
+    select p1.symbol
+    from peakbycountry p1,
+         peakbycountry p2
+    where p1.location = p2.location
+        and p1.price < p2.price
+);
+
+select p.location,p.symbol,p.price
+from pc,peakbycountry p, leadingcomp lc
+where lc.symbol=p.symbol and p.location=pc.location
+order by p.location;
+
+
+--drop q3--
+drop view leadingcomp
+drop view peakbycountry
+drop view peakstockprice
+drop view pc
+drop view numInCountry
+
+create view numInCountry
+as
+select location,count (*) as num
+from company
+where founded < 1990
+group by location;
+
+create view pc
+as
+select location
+from numInCountry
+where num > 5;
+
+create view peakstockprice
+as
+select price,s.symbol
+from stock s, company c
+except
+(
+    select s1.price, s1.symbol
+    from stock s1,
+         stock s2
+    where s1.price < s2.price
+      and s1.symbol = s2.symbol
+);
+
+create view peakbycountry
+as
+select location,price,s.symbol
+from company,peakstockprice s
+where company.Symbol = s.symbol;
+
+create view leadingcomp
+AS
+select symbol
+from peakbycountry
+except
+(
+    select p1.symbol
+    from peakbycountry p1,
+         peakbycountry p2
+    where p1.location = p2.location
+        and p1.price < p2.price
+);
+
+select p.location,p.symbol,p.price
+from pc,peakbycountry p, leadingcomp lc
+where lc.symbol=p.symbol and p.location=pc.location
+order by p.location;
+
+
+--drop q3--
+drop view leadingcomp
+drop view peakbycountry
+drop view peakstockprice
+drop view pc
+drop view numInCountry
