@@ -1,0 +1,102 @@
+create table countries
+(
+    countryname  varchar(50) primary key,
+    capital varchar(50),
+    lang    varchar(50),
+    UNIQUE (capital)
+);
+
+create table guides
+(
+    ID         int primary key,
+    guidename  varchar(50) NOT NULL,
+    birthdate  date,
+        check (YEAR(birthdate) < 2000),
+    Email      varchar(50)
+        check (Email like '%_@_%'),
+    exp        varchar(20)
+        check (exp = 'experienced' or exp = 'beginner'),
+    favCountry varchar(50) not null,
+    foreign key(favCountry) REFERENCES countries(COUNTRYNAME)
+);
+
+
+create table atraction
+(
+    atrname    varchar(50) ,
+    countryname varchar(50),
+    rate    float check (rate >= 1 and rate <= 5),
+    price   float check(price > 0),
+    foreign key(countryname)
+        references countries(countryname),
+    PRIMARY KEY (atrname,countryname)
+);
+
+create table tours
+(
+    tourname        varchar(50) primary key,
+    description     varchar(50),
+    days            int check (days > 3),
+    maxparticipants int check(maxparticipants >= 0),
+    guideID       int NOT NULL ,
+    FOREIGN KEY(guideID) REFERENCES guides(ID)
+
+);
+
+create table route(
+    tourname varchar(50),
+    atrname varchar(50),
+    day int,
+    country varchar(50),
+    primary key (tourname,atrname,country),
+    foreign key(tourname)
+                  references tours(tourname),
+    foreign key(atrname, country)
+                  references atraction(atrname,countryname),
+)
+
+
+
+-----------------------------------
+SELECT T.tID ,T.name, count(*)
+FROM Friends F, Traveler T
+WHERE T.tID = F.tID1
+GROUP BY T.tID,T.name
+HAVING COUNT(*) >=5
+ORDER BY count(*) desc, T.tID desc ;
+
+
+-----------------------------------
+select TR.favTripsType,TT.tID, max(TT.endDate) as lastReturn
+    from TravelerInTrip TT JOIN Traveler TR on
+        TT.tID = TR.tID WHERE TT.tID IN
+(SELECT tID
+FROM (Select TIT.tID, T2.favTripsType, COUNT(*) as num
+        from TravelerInTrip TIT join Traveler T2 on T2.tID = TIT.tID
+        group by TIT.tID, T2.favTripsType) T1
+where num >= all (Select  COUNT(*) as num
+        from TravelerInTrip TIT join Traveler T on T.tID = TIT.tID
+        where t.favTripsType =T1.favTripsType
+        group by TIT.tID))
+group by TT.tID, TR.favTripsType;
+
+-----------------------------------
+
+SELECT TIT.tripName, TIT.startDate, TIT.endDate, COUNT(*) pNum
+FROM TravelerInTrip TIT
+WHERE TIT.startDate >= '2020-01-01' AND TIT.endDate <= '2020-12-31'
+	AND NOT EXISTS (
+					SELECT *
+					FROM TravelerInTrip TIT2
+					WHERE TIT2.tripName=TIT.tripName AND TIT2.startDate=TIT.startDate AND TIT2.endDate=TIT.endDate
+						AND TIT2.tID NOT IN
+										(
+										SELECT TIT3.tID
+										FROM TravelerInTrip TIT3 INNER JOIN TravelerInTrip TIT4 ON
+											TIT3.tripName=TIT4.tripName AND TIT3.tID=TIT4.tID
+										    AND TIT3.endDate < TIT4.startDate
+										WHERE DATEDIFF(month, TIT3.endDate, TIT4.startDate)<3
+										)
+					)
+GROUP BY TIT.tripName, TIT.startDate, TIT.endDate
+ORDER BY pNum DESC, TIT.tripName ASC, TIT.startDate ASC
